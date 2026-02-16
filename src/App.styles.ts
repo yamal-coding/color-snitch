@@ -1,0 +1,43 @@
+export const styles = {
+  page: {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '24px',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: '12px',
+    width: 'min(90vw, 420px)',
+  },
+  title: {
+    margin: 0,
+    fontSize: 'clamp(20px, 4vw, 28px)',
+    fontWeight: 600,
+    textAlign: 'center',
+    color: '#1a1a1a',
+  },
+  input: {
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: '1px solid #c7c7c7',
+    fontSize: '16px',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  button: {
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: '1px solid #1a1a1a',
+    backgroundColor: '#1a1a1a',
+    color: '#ffffff',
+    fontSize: '16px',
+    cursor: 'pointer',
+    width: '100%',
+  },
+} as const
