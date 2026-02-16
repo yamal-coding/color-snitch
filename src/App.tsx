@@ -101,14 +101,25 @@ function View() {
 
         <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-        <input
-          type="text"
-          placeholder="Hex color (e.g.: #FF5733)"
-          value={hexColor}
-          onChange={(e) => setHexColor(e.target.value)}
-          disabled={isLoading}
-          style={styles.input}
-        />
+        <div style={styles.inputWithPreview}>
+          {hexColor && (
+            <div
+              style={{
+                ...styles.colorPreview,
+                backgroundColor: hexColor,
+              }}
+              title={hexColor}
+            />
+          )}
+          <input
+            type="text"
+            placeholder="Hex color (e.g.: #FF5733)"
+            value={hexColor}
+            onChange={(e) => setHexColor(e.target.value)}
+            disabled={isLoading}
+            style={styles.input}
+          />
+        </div>
         <button type="submit" disabled={isLoading} style={styles.button}>
           {isLoading ? 'Loading...' : 'Submit'}
         </button>
