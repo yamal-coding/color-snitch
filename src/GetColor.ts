@@ -50,7 +50,7 @@ function euclideanDistance(color1: [number, number, number], color2: [number, nu
   return Math.sqrt(Math.pow(L1 - L2, 2) + Math.pow(a1 - a2, 2) + Math.pow(b1 - b2, 2))
 }
 
-export function getColorName(hexColor: string): string {
+export async function getColorName(hexColor: string): Promise<string> {
   const inputOklab = hexToOklab(hexColor)
 
   let closestColorName = ''

@@ -40,4 +40,11 @@ export const styles = {
     cursor: 'pointer',
     width: '100%',
   },
+  result: {
+    margin: '8px 0 0 0',
+    fontSize: '18px',
+    fontWeight: 500,
+    textAlign: 'center',
+    color: '#1a1a1a',
+  },
 } as const
