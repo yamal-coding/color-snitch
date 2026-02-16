@@ -15,7 +15,7 @@ function View() {
         }}
       >
         <h1 style={styles.title}>What's the name of this color?</h1>
-        <input type="text" style={styles.input} />
+        <input type="text" placeholder="Hex color (e.g.: #FF5733)" style={styles.input} />
         <button type="submit" style={styles.button}>
           Submit
         </button>
