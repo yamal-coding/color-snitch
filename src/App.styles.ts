@@ -47,4 +47,42 @@ export const styles = {
     textAlign: 'center',
     color: '#1a1a1a',
   },
+  imageUploadContainer: {
+    width: '100%',
+  },
+  imageUploadLabel: {
+    display: 'block',
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: '2px dashed #c7c7c7',
+    fontSize: '16px',
+    textAlign: 'center',
+    cursor: 'pointer',
+    backgroundColor: '#f9f9f9',
+    transition: 'all 0.2s',
+    color: '#1a1a1a',
+  } as React.CSSProperties,
+  fileInput: {
+    display: 'none',
+  },
+  imageContainer: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  image: {
+    maxWidth: '100%',
+    maxHeight: '300px',
+    borderRadius: '10px',
+    cursor: 'crosshair',
+    border: '2px solid #e0e0e0',
+  },
+  imageHint: {
+    margin: 0,
+    fontSize: '14px',
+    color: '#666',
+    fontStyle: 'italic',
+  },
 } as const
