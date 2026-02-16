@@ -36,14 +36,6 @@ export const styles = {
     gap: '12px',
     width: '100%',
   },
-  colorPreview: {
-    width: '50px',
-    height: '50px',
-    borderRadius: '8px',
-    border: '2px solid #e0e0e0',
-    flexShrink: 0,
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  },
   button: {
     padding: '12px 14px',
     borderRadius: '10px',

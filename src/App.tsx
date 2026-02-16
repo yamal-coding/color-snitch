@@ -105,7 +105,12 @@ function View() {
           {hexColor && (
             <div
               style={{
-                ...styles.colorPreview,
+                width: '50px',
+                height: '50px',
+                borderRadius: '8px',
+                border: '2px solid #e0e0e0',
+                flexShrink: 0,
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
                 backgroundColor: hexColor,
               }}
               title={hexColor}
@@ -115,13 +120,16 @@ function View() {
             type="text"
             placeholder="Hex color (e.g.: #FF5733)"
             value={hexColor}
-            onChange={(e) => setHexColor(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value
+              setHexColor(value && !value.startsWith('#') ? `#${value}` : value)
+            }}
             disabled={isLoading}
             style={styles.input}
           />
         </div>
         <button type="submit" disabled={isLoading} style={styles.button}>
-          {isLoading ? 'Loading...' : 'Submit'}
+          {isLoading ? 'Loading...' : 'Get color name'}
         </button>
         {colorName && !isLoading && (
           <p style={styles.result}>Color name: {colorName}</p>
