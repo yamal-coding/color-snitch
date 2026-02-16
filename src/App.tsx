@@ -2,7 +2,7 @@ import { styles } from './App.styles'
 
 function View() {
   const handleSubmit = () => {
-    // TODO: Implement submit behavior.
+    console.log('Submit button clicked');
   }
 
   return (
