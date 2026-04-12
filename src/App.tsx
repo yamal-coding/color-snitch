@@ -1,58 +1,194 @@
-import { useState, useRef } from 'react'
-import { styles } from './App.styles'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { styles, SAMPLE_SIZE, VIEWER_HEIGHT } from './App.styles'
 import { getColorName } from './GetColor'
+import { averageColor, rgbToHex } from './averageColor'
 
 function View() {
   const [hexColor, setHexColor] = useState('')
   const [colorName, setColorName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [image, setImage] = useState<HTMLImageElement | null>(null)
+
+  // Zoom & pan state
+  const [zoom, setZoom] = useState(1)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragStart = useRef({ x: 0, y: 0 })
+  const panStart = useRef({ x: 0, y: 0 })
+
+  const viewerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const imageRef = useRef<HTMLImageElement>(null)
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  // Get viewer width dynamically
+  const getViewerWidth = useCallback(() => {
+    return viewerRef.current?.clientWidth ?? 400
+  }, [])
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      const url = URL.createObjectURL(file)
-      setImageUrl(url)
-      setColorName('')
+      const img = new Image()
+      img.onload = () => {
+        setImage(img)
+        setColorName('')
+        setHexColor('')
+
+        // Fit image into viewer by default
+        const viewerWidth = getViewerWidth()
+        const scaleX = viewerWidth / img.naturalWidth
+        const scaleY = VIEWER_HEIGHT / img.naturalHeight
+        const fitZoom = Math.min(scaleX, scaleY)
+        setZoom(fitZoom)
+
+        // Center the image
+        setPan({
+          x: (viewerWidth - img.naturalWidth * fitZoom) / 2,
+          y: (VIEWER_HEIGHT - img.naturalHeight * fitZoom) / 2,
+        })
+
+        // Create offscreen canvas for pixel sampling
+        const offscreen = document.createElement('canvas')
+        offscreen.width = img.naturalWidth
+        offscreen.height = img.naturalHeight
+        const ctx = offscreen.getContext('2d')
+        if (ctx) {
+          ctx.drawImage(img, 0, 0)
+        }
+        offscreenCanvasRef.current = offscreen
+      }
+      img.src = URL.createObjectURL(file)
     }
   }
 
-  const handleImageClick = (event: React.MouseEvent<HTMLImageElement>) => {
-    if (!imageRef.current || !canvasRef.current) return
-
+  // Draw the image on the visible canvas with current zoom/pan
+  const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current
+    const viewer = viewerRef.current
+    if (!canvas || !viewer || !image) return
+
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const img = imageRef.current
-    const rect = img.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
+    const width = viewer.clientWidth
+    const height = VIEWER_HEIGHT
+    canvas.width = width
+    canvas.height = height
 
-    // Get the actual image dimensions
-    const scaleX = img.naturalWidth / rect.width
-    const scaleY = img.naturalHeight / rect.height
+    ctx.clearRect(0, 0, width, height)
+    ctx.imageSmoothingEnabled = zoom < 4
+    ctx.drawImage(
+      image,
+      pan.x,
+      pan.y,
+      image.naturalWidth * zoom,
+      image.naturalHeight * zoom,
+    )
+  }, [image, zoom, pan])
 
-    canvas.width = img.naturalWidth
-    canvas.height = img.naturalHeight
-    ctx.drawImage(img, 0, 0)
+  useEffect(() => {
+    drawCanvas()
+  }, [drawCanvas])
 
-    const pixel = ctx.getImageData(x * scaleX, y * scaleY, 1, 1).data
-    const hex = `#${pixel[0].toString(16).padStart(2, '0')}${pixel[1].toString(16).padStart(2, '0')}${pixel[2].toString(16).padStart(2, '0')}`
-    setHexColor(hex.toUpperCase())
-  }
+  // Mouse wheel zoom (zoom toward pointer)
+  const handleWheel = useCallback(
+    (event: React.WheelEvent) => {
+      event.preventDefault()
+      if (!image || !viewerRef.current) return
+
+      const rect = viewerRef.current.getBoundingClientRect()
+      const pointerX = event.clientX - rect.left
+      const pointerY = event.clientY - rect.top
+
+      const zoomFactor = event.deltaY < 0 ? 1.15 : 1 / 1.15
+      const newZoom = Math.max(0.1, Math.min(zoom * zoomFactor, 50))
+
+      // Adjust pan so the point under the cursor stays fixed
+      const newPanX = pointerX - (pointerX - pan.x) * (newZoom / zoom)
+      const newPanY = pointerY - (pointerY - pan.y) * (newZoom / zoom)
+
+      setZoom(newZoom)
+      setPan({ x: newPanX, y: newPanY })
+    },
+    [image, zoom, pan],
+  )
+
+  // Drag to pan
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent) => {
+      if (!image) return
+      setIsDragging(true)
+      dragStart.current = { x: event.clientX, y: event.clientY }
+      panStart.current = { x: pan.x, y: pan.y }
+      ;(event.target as HTMLElement).setPointerCapture(event.pointerId)
+    },
+    [image, pan],
+  )
+
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent) => {
+      if (!isDragging) return
+      const dx = event.clientX - dragStart.current.x
+      const dy = event.clientY - dragStart.current.y
+      setPan({
+        x: panStart.current.x + dx,
+        y: panStart.current.y + dy,
+      })
+    },
+    [isDragging],
+  )
+
+  const handlePointerUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  // Sample the area under the centered overlay
+  const handleSampleArea = useCallback(() => {
+    const offscreen = offscreenCanvasRef.current
+    const viewer = viewerRef.current
+    if (!offscreen || !viewer || !image) return
+
+    const ctx = offscreen.getContext('2d')
+    if (!ctx) return
+
+    const viewerWidth = viewer.clientWidth
+
+    // Center of the viewer in screen coords
+    const centerX = viewerWidth / 2
+    const centerY = VIEWER_HEIGHT / 2
+
+    // Map screen center to image coordinates
+    const imgX = (centerX - pan.x) / zoom
+    const imgY = (centerY - pan.y) / zoom
+
+    // The sample region in image space
+    const halfSample = Math.floor(SAMPLE_SIZE / 2)
+    const startX = Math.max(0, Math.round(imgX - halfSample))
+    const startY = Math.max(0, Math.round(imgY - halfSample))
+    const endX = Math.min(image.naturalWidth, startX + SAMPLE_SIZE)
+    const endY = Math.min(image.naturalHeight, startY + SAMPLE_SIZE)
+    const w = endX - startX
+    const h = endY - startY
+
+    if (w <= 0 || h <= 0) return
+
+    const imageData = ctx.getImageData(startX, startY, w, h)
+    const [r, g, b] = averageColor(imageData)
+    setHexColor(rgbToHex(r, g, b))
+  }, [image, zoom, pan])
+
+  // Compute overlay size in screen pixels (SAMPLE_SIZE image pixels * zoom)
+  const overlayScreenSize = Math.max(SAMPLE_SIZE * zoom, 8)
 
   const handleSubmit = async () => {
     if (!hexColor.trim()) return
-    
+
     setIsLoading(true)
     setColorName('')
-    
+
     try {
       // Artificial delay to show loading state
-      await new Promise(resolve => setTimeout(resolve, 500))
+      await new Promise((resolve) => setTimeout(resolve, 500))
       const result = await getColorName(hexColor)
       setColorName(result)
     } catch (error) {
@@ -75,7 +211,7 @@ function View() {
 
         <div style={styles.imageUploadContainer}>
           <label htmlFor="image-upload" style={styles.imageUploadLabel}>
-            📷 Pick color from image
+            Pick color from image
           </label>
           <input
             id="image-upload"
@@ -86,20 +222,40 @@ function View() {
           />
         </div>
 
-        {imageUrl && (
-          <div style={styles.imageContainer}>
-            <img
-              ref={imageRef}
-              src={imageUrl}
-              alt="Uploaded"
-              onClick={handleImageClick}
-              style={styles.image}
-            />
-            <p style={styles.imageHint}>Click on the image to pick a color</p>
-          </div>
+        {image && (
+          <>
+            <div
+              ref={viewerRef}
+              style={{
+                ...styles.imageViewerContainer,
+                ...(isDragging ? styles.imageViewerContainerGrabbing : {}),
+              }}
+              onWheel={handleWheel}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+            >
+              <canvas ref={canvasRef} style={styles.viewerCanvas} />
+              <div
+                style={{
+                  ...styles.samplingOverlay,
+                  width: `${overlayScreenSize}px`,
+                  height: `${overlayScreenSize}px`,
+                }}
+              />
+            </div>
+            <p style={styles.viewerHint}>
+              Scroll to zoom, drag to pan. The square marks the sampling area.
+            </p>
+            <button
+              type="button"
+              onClick={handleSampleArea}
+              style={styles.sampleButton}
+            >
+              Sample area
+            </button>
+          </>
         )}
-
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
 
         <div style={styles.inputWithPreview}>
           {hexColor && (

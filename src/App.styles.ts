@@ -1,3 +1,6 @@
+export const SAMPLE_SIZE = 21 // pixels in image space (odd so it centers nicely)
+export const VIEWER_HEIGHT = 350
+
 export const styles = {
   page: {
     minHeight: '100vh',
@@ -71,24 +74,48 @@ export const styles = {
   fileInput: {
     display: 'none',
   },
-  imageContainer: {
+  imageViewerContainer: {
     width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  image: {
-    maxWidth: '100%',
-    maxHeight: '300px',
+    position: 'relative',
+    height: `${VIEWER_HEIGHT}px`,
     borderRadius: '10px',
-    cursor: 'crosshair',
     border: '2px solid #e0e0e0',
-  },
-  imageHint: {
+    overflow: 'hidden',
+    cursor: 'grab',
+    userSelect: 'none',
+    touchAction: 'none',
+  } as React.CSSProperties,
+  imageViewerContainerGrabbing: {
+    cursor: 'grabbing',
+  } as React.CSSProperties,
+  viewerCanvas: {
+    display: 'block',
+  } as React.CSSProperties,
+  samplingOverlay: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    border: '2px solid rgba(255, 255, 255, 0.9)',
+    boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.3)',
+    borderRadius: '2px',
+    pointerEvents: 'none',
+  } as React.CSSProperties,
+  viewerHint: {
     margin: 0,
     fontSize: '14px',
     color: '#666',
     fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  sampleButton: {
+    padding: '10px 14px',
+    borderRadius: '10px',
+    border: '1px solid #4a90d9',
+    backgroundColor: '#4a90d9',
+    color: '#ffffff',
+    fontSize: '15px',
+    cursor: 'pointer',
+    width: '100%',
   },
 } as const
