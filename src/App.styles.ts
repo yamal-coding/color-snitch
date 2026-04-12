@@ -1,4 +1,3 @@
-export const SAMPLE_SIZE = 21 // pixels in image space (odd so it centers nicely)
 export const VIEWER_HEIGHT = 350
 
 export const styles = {
@@ -79,27 +78,18 @@ export const styles = {
     position: 'relative',
     height: `${VIEWER_HEIGHT}px`,
     borderRadius: '10px',
-    border: '2px solid #e0e0e0',
+    border: '3px solid #1a1a1a',
     overflow: 'hidden',
     cursor: 'grab',
     userSelect: 'none',
     touchAction: 'none',
+    backgroundColor: '#f0f0f0',
   } as React.CSSProperties,
   imageViewerContainerGrabbing: {
     cursor: 'grabbing',
   } as React.CSSProperties,
   viewerCanvas: {
     display: 'block',
-  } as React.CSSProperties,
-  samplingOverlay: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    border: '2px solid rgba(255, 255, 255, 0.9)',
-    boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.3)',
-    borderRadius: '2px',
-    pointerEvents: 'none',
   } as React.CSSProperties,
   viewerHint: {
     margin: 0,

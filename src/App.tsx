@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { styles, SAMPLE_SIZE, VIEWER_HEIGHT } from './App.styles'
+import { styles, VIEWER_HEIGHT } from './App.styles'
 import { getColorName } from './GetColor'
 import { averageColor, rgbToHex } from './averageColor'
 
@@ -20,7 +20,6 @@ function View() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Get viewer width dynamically
   const getViewerWidth = useCallback(() => {
     return viewerRef.current?.clientWidth ?? 400
   }, [])
@@ -142,7 +141,7 @@ function View() {
     setIsDragging(false)
   }, [])
 
-  // Sample the area under the centered overlay
+  // Sample the entire visible frame area
   const handleSampleArea = useCallback(() => {
     const offscreen = offscreenCanvasRef.current
     const viewer = viewerRef.current
@@ -153,32 +152,27 @@ function View() {
 
     const viewerWidth = viewer.clientWidth
 
-    // Center of the viewer in screen coords
-    const centerX = viewerWidth / 2
-    const centerY = VIEWER_HEIGHT / 2
+    // Map the four corners of the viewer to image coordinates
+    const imgLeft = Math.max(0, Math.round(-pan.x / zoom))
+    const imgTop = Math.max(0, Math.round(-pan.y / zoom))
+    const imgRight = Math.min(
+      image.naturalWidth,
+      Math.round((viewerWidth - pan.x) / zoom),
+    )
+    const imgBottom = Math.min(
+      image.naturalHeight,
+      Math.round((VIEWER_HEIGHT - pan.y) / zoom),
+    )
 
-    // Map screen center to image coordinates
-    const imgX = (centerX - pan.x) / zoom
-    const imgY = (centerY - pan.y) / zoom
-
-    // The sample region in image space
-    const halfSample = Math.floor(SAMPLE_SIZE / 2)
-    const startX = Math.max(0, Math.round(imgX - halfSample))
-    const startY = Math.max(0, Math.round(imgY - halfSample))
-    const endX = Math.min(image.naturalWidth, startX + SAMPLE_SIZE)
-    const endY = Math.min(image.naturalHeight, startY + SAMPLE_SIZE)
-    const w = endX - startX
-    const h = endY - startY
+    const w = imgRight - imgLeft
+    const h = imgBottom - imgTop
 
     if (w <= 0 || h <= 0) return
 
-    const imageData = ctx.getImageData(startX, startY, w, h)
+    const imageData = ctx.getImageData(imgLeft, imgTop, w, h)
     const [r, g, b] = averageColor(imageData)
     setHexColor(rgbToHex(r, g, b))
   }, [image, zoom, pan])
-
-  // Compute overlay size in screen pixels (SAMPLE_SIZE image pixels * zoom)
-  const overlayScreenSize = Math.max(SAMPLE_SIZE * zoom, 8)
 
   const handleSubmit = async () => {
     if (!hexColor.trim()) return
@@ -224,6 +218,10 @@ function View() {
 
         {image && (
           <>
+            <p style={styles.viewerHint}>
+              Scroll to zoom, drag to pan. Everything inside the frame is
+              scanned.
+            </p>
             <div
               ref={viewerRef}
               style={{
@@ -236,23 +234,13 @@ function View() {
               onPointerUp={handlePointerUp}
             >
               <canvas ref={canvasRef} style={styles.viewerCanvas} />
-              <div
-                style={{
-                  ...styles.samplingOverlay,
-                  width: `${overlayScreenSize}px`,
-                  height: `${overlayScreenSize}px`,
-                }}
-              />
             </div>
-            <p style={styles.viewerHint}>
-              Scroll to zoom, drag to pan. The square marks the sampling area.
-            </p>
             <button
               type="button"
               onClick={handleSampleArea}
               style={styles.sampleButton}
             >
-              Sample area
+              Scan area
             </button>
           </>
         )}
