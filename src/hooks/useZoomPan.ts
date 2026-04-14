@@ -9,6 +9,8 @@ export interface ZoomPanHandlers {
   zoom: number
   pan: Pan
   isDragging: boolean
+  /** Returns true when the most recent pointer gesture exceeded the drag threshold. */
+  wasDrag: () => boolean
   viewerRef: React.RefObject<HTMLDivElement | null>
   reset: (naturalWidth: number, naturalHeight: number) => void
   handleWheel: (event: React.WheelEvent) => void
@@ -35,6 +37,11 @@ export function useZoomPan(viewerHeight: number = VIEWER_HEIGHT_FALLBACK): ZoomP
   const panStart = useRef({ x: 0, y: 0 })
   const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map())
   const lastPinchDistance = useRef<number | null>(null)
+  // Accumulated pointer travel distance for the current gesture (used to
+  // distinguish a tap/click from a pan drag). Stored as a ref so callers
+  // can read the final value synchronously inside the same pointerup handler.
+  const pointerTravelRef = useRef(0)
+  const lastPointerWasDragRef = useRef(false)
 
   // Keep refs in sync so pointer handlers can read latest values without
   // declaring them as dependencies (avoids stale-closure issues).
@@ -84,15 +91,24 @@ export function useZoomPan(viewerHeight: number = VIEWER_HEIGHT_FALLBACK): ZoomP
       setIsDragging(true)
       dragStart.current = { x: event.clientX, y: event.clientY }
       panStart.current = { x: panRef.current.x, y: panRef.current.y }
+      pointerTravelRef.current = 0
     } else {
+      // Multi-finger gesture — always treat as a drag so pixel pick is suppressed.
+      pointerTravelRef.current = Infinity
       setIsDragging(false)
       lastPinchDistance.current = null
     }
   }, [])
 
   const handlePointerMove = useCallback((event: React.PointerEvent) => {
+    const prev = activePointers.current.get(event.pointerId)
     activePointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
     const pointers = Array.from(activePointers.current.values())
+
+    // Accumulate travel distance so we can distinguish a tap from a drag.
+    if (prev && pointers.length === 1) {
+      pointerTravelRef.current += Math.hypot(event.clientX - prev.x, event.clientY - prev.y)
+    }
 
     if (pointers.length === 2) {
       const [a, b] = pointers
@@ -131,6 +147,11 @@ export function useZoomPan(viewerHeight: number = VIEWER_HEIGHT_FALLBACK): ZoomP
     activePointers.current.delete(event.pointerId)
     lastPinchDistance.current = null
 
+    // A movement of more than 5px is considered a drag, not a tap.
+    // Written to a ref so the value is readable synchronously by the caller
+    // in the same event handler, before any re-render occurs.
+    lastPointerWasDragRef.current = pointerTravelRef.current > 5
+
     if (activePointers.current.size === 1) {
       const [remaining] = Array.from(activePointers.current.entries())
       dragStart.current = { x: remaining[1].x, y: remaining[1].y }
@@ -145,6 +166,7 @@ export function useZoomPan(viewerHeight: number = VIEWER_HEIGHT_FALLBACK): ZoomP
     zoom,
     pan,
     isDragging,
+    wasDrag: useCallback(() => lastPointerWasDragRef.current, []),
     viewerRef,
     reset,
     handleWheel,
