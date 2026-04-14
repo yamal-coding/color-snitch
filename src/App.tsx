@@ -16,6 +16,14 @@ function View() {
   const dragStart = useRef({ x: 0, y: 0 })
   const panStart = useRef({ x: 0, y: 0 })
 
+  // Multi-touch tracking for pinch-to-zoom
+  const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map())
+  const lastPinchDistance = useRef<number | null>(null)
+  const zoomRef = useRef(zoom)
+  const panRef = useRef(pan)
+  useEffect(() => { zoomRef.current = zoom }, [zoom])
+  useEffect(() => { panRef.current = pan }, [pan])
+
   const viewerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null)
@@ -112,34 +120,102 @@ function View() {
     [image, zoom, pan],
   )
 
-  // Drag to pan
+  // Drag to pan / pinch to zoom
   const handlePointerDown = useCallback(
     (event: React.PointerEvent) => {
       if (!image) return
-      setIsDragging(true)
-      dragStart.current = { x: event.clientX, y: event.clientY }
-      panStart.current = { x: pan.x, y: pan.y }
       ;(event.target as HTMLElement).setPointerCapture(event.pointerId)
+      activePointers.current.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
+      })
+
+      if (activePointers.current.size === 1) {
+        // Single finger — start pan
+        setIsDragging(true)
+        dragStart.current = { x: event.clientX, y: event.clientY }
+        panStart.current = { x: panRef.current.x, y: panRef.current.y }
+      } else {
+        // Second finger joined — switch to pinch mode, stop pan
+        setIsDragging(false)
+        lastPinchDistance.current = null
+      }
     },
-    [image, pan],
+    [image],
   )
 
   const handlePointerMove = useCallback(
     (event: React.PointerEvent) => {
-      if (!isDragging) return
-      const dx = event.clientX - dragStart.current.x
-      const dy = event.clientY - dragStart.current.y
-      setPan({
-        x: panStart.current.x + dx,
-        y: panStart.current.y + dy,
+      if (!image) return
+
+      // Update this pointer's stored position
+      activePointers.current.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
       })
+
+      const pointers = Array.from(activePointers.current.values())
+
+      if (pointers.length === 2) {
+        // Pinch-to-zoom
+        const [a, b] = pointers
+        const distance = Math.hypot(b.x - a.x, b.y - a.y)
+
+        if (lastPinchDistance.current !== null) {
+          const currentZoom = zoomRef.current
+          const currentPan = panRef.current
+          const zoomFactor = distance / lastPinchDistance.current
+          const newZoom = Math.max(0.1, Math.min(currentZoom * zoomFactor, 50))
+
+          // Anchor zoom to the midpoint between the two fingers
+          const midX = (a.x + b.x) / 2
+          const midY = (a.y + b.y) / 2
+          const rect = viewerRef.current?.getBoundingClientRect()
+          const localMidX = midX - (rect?.left ?? 0)
+          const localMidY = midY - (rect?.top ?? 0)
+
+          const newPanX = localMidX - (localMidX - currentPan.x) * (newZoom / currentZoom)
+          const newPanY = localMidY - (localMidY - currentPan.y) * (newZoom / currentZoom)
+
+          setZoom(newZoom)
+          setPan({ x: newPanX, y: newPanY })
+        }
+
+        lastPinchDistance.current = distance
+      } else if (pointers.length === 1) {
+        // Single-finger pan
+        if (!isDragging) return
+        const dx = event.clientX - dragStart.current.x
+        const dy = event.clientY - dragStart.current.y
+        setPan({
+          x: panStart.current.x + dx,
+          y: panStart.current.y + dy,
+        })
+      }
     },
-    [isDragging],
+    [image, isDragging],
   )
 
-  const handlePointerUp = useCallback(() => {
-    setIsDragging(false)
-  }, [])
+  const releasePointer = useCallback(
+    (event: React.PointerEvent) => {
+      activePointers.current.delete(event.pointerId)
+      lastPinchDistance.current = null
+
+      if (activePointers.current.size === 1) {
+        // One finger remains — resume pan from current position
+        const [remaining] = Array.from(activePointers.current.entries())
+        dragStart.current = { x: remaining[1].x, y: remaining[1].y }
+        panStart.current = { x: panRef.current.x, y: panRef.current.y }
+        setIsDragging(true)
+      } else {
+        setIsDragging(false)
+      }
+    },
+    [],
+  )
+
+  const handlePointerUp = releasePointer
+  const handlePointerCancel = releasePointer
 
   // Sample the entire visible frame area
   const handleSampleArea = useCallback(() => {
@@ -219,8 +295,8 @@ function View() {
         {image && (
           <>
             <p style={styles.viewerHint}>
-              Scroll to zoom, drag to pan. Everything inside the frame is
-              scanned.
+              Scroll or pinch to zoom, drag to pan. Everything inside the frame
+              is scanned.
             </p>
             <div
               ref={viewerRef}
@@ -232,6 +308,7 @@ function View() {
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerCancel}
             >
               <canvas ref={canvasRef} style={styles.viewerCanvas} />
             </div>
