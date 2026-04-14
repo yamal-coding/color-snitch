@@ -6,36 +6,27 @@ interface ColorInputProps {
 }
 
 /**
- * Renders the hex color text input with an inline color swatch preview,
- * the submit button, and the resolved color name result.
+ * Renders the unified color result: a color swatch, hex code, and resolved
+ * color name displayed together in a single label. Only shown when a result
+ * is available.
  */
 export function ColorInput({ state }: ColorInputProps) {
-  const { hexColor, colorName, isLoading, setHexColor } = state
+  const { hexColor, colorName, isLoading } = state
+
+  if (!hexColor || isLoading) return null
 
   return (
-    <>
-      <div style={styles.inputWithPreview}>
-        {hexColor && (
-          <div
-            style={{ ...styles.colorSwatch, backgroundColor: hexColor }}
-            title={hexColor}
-          />
+    <div style={styles.colorResult}>
+      <div
+        style={{ ...styles.colorResultSwatch, backgroundColor: hexColor }}
+        title={hexColor}
+      />
+      <div style={styles.colorResultText}>
+        <span style={styles.colorResultHex}>{hexColor.toUpperCase()}</span>
+        {colorName && (
+          <span style={styles.colorResultName}>{colorName}</span>
         )}
-        <input
-          type="text"
-          placeholder="Hex color (e.g.: #FF5733)"
-          value={hexColor}
-          onChange={(e) => setHexColor(e.target.value)}
-          disabled={isLoading}
-          style={styles.input}
-        />
       </div>
-      <button type="submit" disabled={isLoading} style={styles.button}>
-        {isLoading ? 'Loading...' : 'Get color name'}
-      </button>
-      {colorName && !isLoading && (
-        <p style={styles.result}>Color name: {colorName}</p>
-      )}
-    </>
+    </div>
   )
 }

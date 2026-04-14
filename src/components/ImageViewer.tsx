@@ -3,14 +3,13 @@ import type { ImageViewerState } from '../hooks/useImageViewer'
 
 interface ImageViewerProps {
   viewer: ImageViewerState
-  onScan: () => void
 }
 
 /**
- * Renders the zoomable/pannable canvas viewer, a usage hint, and the
- * "Scan area" trigger. All interaction state lives in the passed hook value.
+ * Renders the zoomable/pannable canvas viewer and a usage hint.
+ * All interaction state lives in the passed hook value.
  */
-export function ImageViewer({ viewer, onScan }: ImageViewerProps) {
+export function ImageViewer({ viewer }: ImageViewerProps) {
   const {
     isDragging,
     viewerRef,
@@ -41,9 +40,6 @@ export function ImageViewer({ viewer, onScan }: ImageViewerProps) {
       >
         <canvas ref={canvasRef} style={styles.viewerCanvas} />
       </div>
-      <button type="button" onClick={onScan} style={styles.sampleButton}>
-        Scan area
-      </button>
     </>
   )
 }

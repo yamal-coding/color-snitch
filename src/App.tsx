@@ -8,20 +8,17 @@ function App() {
   const viewer = useImageViewer()
   const colorName = useColorName()
 
-  const handleScan = () => {
+  const handleScanAndGetColor = async () => {
     const hex = viewer.sampleVisibleArea()
-    if (hex) colorName.setHexColor(hex)
+    if (hex) {
+      colorName.setHexColor(hex)
+      await colorName.handleSubmitFor(hex)
+    }
   }
 
   return (
     <div style={styles.page}>
-      <form
-        style={styles.form}
-        onSubmit={(e) => {
-          e.preventDefault()
-          colorName.handleSubmit()
-        }}
-      >
+      <div style={styles.form}>
         <h1 style={styles.title}>What's the name of this color?</h1>
 
         <div style={styles.imageUploadContainer}>
@@ -37,10 +34,22 @@ function App() {
           />
         </div>
 
-        {viewer.image && <ImageViewer viewer={viewer} onScan={handleScan} />}
+        {viewer.image && (
+          <>
+            <ImageViewer viewer={viewer} />
+            <button
+              type="button"
+              onClick={handleScanAndGetColor}
+              disabled={colorName.isLoading}
+              style={styles.button}
+            >
+              {colorName.isLoading ? 'Loading...' : 'Scan and get average color name'}
+            </button>
+          </>
+        )}
 
         <ColorInput state={colorName} />
-      </form>
+      </div>
     </div>
   )
 }
