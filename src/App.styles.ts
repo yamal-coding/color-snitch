@@ -98,6 +98,14 @@ export const styles = {
     fontStyle: 'italic',
     textAlign: 'center',
   },
+  colorSwatch: {
+    width: '50px',
+    height: '50px',
+    borderRadius: '8px',
+    border: '2px solid #e0e0e0',
+    flexShrink: 0,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  } as React.CSSProperties,
   sampleButton: {
     padding: '10px 14px',
     borderRadius: '10px',
