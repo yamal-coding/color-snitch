@@ -10,7 +10,7 @@ interface ColorInputProps {
  * the submit button, and the resolved color name result.
  */
 export function ColorInput({ state }: ColorInputProps) {
-  const { hexColor, colorName, isLoading, setHexColor, handleSubmit } = state
+  const { hexColor, colorName, isLoading, setHexColor } = state
 
   return (
     <>
