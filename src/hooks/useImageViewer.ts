@@ -8,6 +8,7 @@ export interface ImageViewerState extends ZoomPanHandlers {
   canvasRef: React.RefObject<HTMLCanvasElement | null>
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
   sampleVisibleArea: () => string | null
+  samplePixel: (clientX: number, clientY: number) => string | null
 }
 
 /**
@@ -94,11 +95,41 @@ export function useImageViewer(): ImageViewerState {
     return rgbToHex(r, g, b)
   }, [image, zoom, pan, viewerRef])
 
+  /**
+   * Samples the color of a single pixel at the given client coordinates.
+   * Translates client → canvas-local → image coordinates using current zoom/pan.
+   * Returns the hex string, or null if sampling is not possible.
+   */
+  const samplePixel = useCallback((clientX: number, clientY: number): string | null => {
+    const offscreen = offscreenCanvasRef.current
+    const canvas = canvasRef.current
+    if (!offscreen || !canvas || !image) return null
+
+    const ctx = offscreen.getContext('2d')
+    if (!ctx) return null
+
+    const rect = canvas.getBoundingClientRect()
+    const canvasX = clientX - rect.left
+    const canvasY = clientY - rect.top
+
+    // Invert the canvas transform: canvasCoord = imgCoord * zoom + pan
+    const imgX = Math.round((canvasX - pan.x) / zoom)
+    const imgY = Math.round((canvasY - pan.y) / zoom)
+
+    // Clamp to image bounds
+    const clampedX = Math.max(0, Math.min(image.naturalWidth - 1, imgX))
+    const clampedY = Math.max(0, Math.min(image.naturalHeight - 1, imgY))
+
+    const { data } = ctx.getImageData(clampedX, clampedY, 1, 1)
+    return rgbToHex(data[0], data[1], data[2])
+  }, [image, zoom, pan])
+
   return {
     image,
     canvasRef,
     handleImageUpload,
     sampleVisibleArea,
+    samplePixel,
     ...zoomPan,
   }
 }

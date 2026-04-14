@@ -113,4 +113,22 @@ export const styles = {
     fontWeight: 500,
     color: '#444',
   } as React.CSSProperties,
+  modeToggleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: '8px',
+  } as React.CSSProperties,
+  modeToggleLabel: {
+    fontSize: '14px',
+    color: '#444',
+    cursor: 'pointer',
+    userSelect: 'none',
+  } as React.CSSProperties,
+  modeToggleCheckbox: {
+    width: '16px',
+    height: '16px',
+    cursor: 'pointer',
+    accentColor: '#1a1a1a',
+  } as React.CSSProperties,
 } as const
