@@ -47,16 +47,20 @@ function App() {
         {viewer.image && (
           <>
             <div style={styles.modeToggleRow}>
-              <label htmlFor="pixel-mode-toggle" style={styles.modeToggleLabel}>
-                Pick single pixel
-              </label>
-              <input
-                id="pixel-mode-toggle"
-                type="checkbox"
-                checked={pixelMode}
-                onChange={(e) => setPixelMode(e.target.checked)}
-                style={styles.modeToggleCheckbox}
-              />
+              <button
+                type="button"
+                onClick={() => setPixelMode(false)}
+                style={{ ...pixelMode ? styles.modeToggleButton : styles.modeToggleButtonSelected, borderRadius: '8px 0 0 8px' }}
+              >
+                Area
+              </button>
+              <button
+                type="button"
+                onClick={() => setPixelMode(true)}
+                style={{ ...pixelMode ? styles.modeToggleButtonSelected : styles.modeToggleButton, borderRadius: '0 8px 8px 0', borderLeft: 'none' }}
+              >
+                Pixel
+              </button>
             </div>
 
             <ImageViewer

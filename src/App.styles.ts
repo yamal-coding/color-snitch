@@ -116,20 +116,28 @@ export const styles = {
   modeToggleRow: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: '8px',
+    justifyContent: 'flex-start',
+    gap: '0px',
   } as React.CSSProperties,
-  modeToggleLabel: {
+  modeToggleButton: {
+    padding: '6px 16px',
     fontSize: '14px',
+    cursor: 'pointer',
+    border: '1px solid #c7c7c7',
+    backgroundColor: '#f9f9f9',
     color: '#444',
-    cursor: 'pointer',
     userSelect: 'none',
+    transition: 'all 0.15s',
   } as React.CSSProperties,
-  modeToggleCheckbox: {
-    width: '16px',
-    height: '16px',
+  modeToggleButtonSelected: {
+    padding: '6px 16px',
+    fontSize: '14px',
     cursor: 'pointer',
-    accentColor: '#1a1a1a',
+    border: '1px solid #1a1a1a',
+    backgroundColor: '#1a1a1a',
+    color: '#ffffff',
+    userSelect: 'none',
+    transition: 'all 0.15s',
   } as React.CSSProperties,
   colorResultSkeleton: {
     display: 'flex',
