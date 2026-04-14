@@ -7,13 +7,25 @@ interface ColorInputProps {
 
 /**
  * Renders the unified color result: a color swatch, hex code, and resolved
- * color name displayed together in a single label. Only shown when a result
- * is available.
+ * color name displayed together in a single label. Shows a shimmer skeleton
+ * while loading. Only shown when a hex color has been set.
  */
 export function ColorInput({ state }: ColorInputProps) {
   const { hexColor, colorName, isLoading } = state
 
-  if (!hexColor || isLoading) return null
+  if (!hexColor) return null
+
+  if (isLoading) {
+    return (
+      <div style={styles.colorResultSkeleton}>
+        <div style={styles.skeletonSwatch} />
+        <div style={styles.skeletonLines}>
+          <div style={styles.skeletonLineShort} />
+          <div style={styles.skeletonLineLong} />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={styles.colorResult}>
