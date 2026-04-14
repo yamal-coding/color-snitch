@@ -1,3 +1,5 @@
+export const VIEWER_HEIGHT = 350
+
 export const styles = {
   page: {
     minHeight: '100vh',
@@ -22,20 +24,6 @@ export const styles = {
     textAlign: 'center',
     color: '#1a1a1a',
   },
-  input: {
-    padding: '12px 14px',
-    borderRadius: '10px',
-    border: '1px solid #c7c7c7',
-    fontSize: '16px',
-    width: '100%',
-    boxSizing: 'border-box',
-  },
-  inputWithPreview: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    width: '100%',
-  },
   button: {
     padding: '12px 14px',
     borderRadius: '10px',
@@ -45,13 +33,6 @@ export const styles = {
     fontSize: '16px',
     cursor: 'pointer',
     width: '100%',
-  },
-  result: {
-    margin: '8px 0 0 0',
-    fontSize: '18px',
-    fontWeight: 500,
-    textAlign: 'center',
-    color: '#1a1a1a',
   },
   imageUploadContainer: {
     width: '100%',
@@ -71,24 +52,65 @@ export const styles = {
   fileInput: {
     display: 'none',
   },
-  imageContainer: {
+  imageViewerContainer: {
     width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  image: {
-    maxWidth: '100%',
-    maxHeight: '300px',
+    position: 'relative',
+    height: `${VIEWER_HEIGHT}px`,
     borderRadius: '10px',
-    cursor: 'crosshair',
-    border: '2px solid #e0e0e0',
-  },
-  imageHint: {
+    border: '3px solid #1a1a1a',
+    overflow: 'hidden',
+    cursor: 'grab',
+    userSelect: 'none',
+    touchAction: 'none',
+    backgroundColor: '#f0f0f0',
+  } as React.CSSProperties,
+  imageViewerContainerGrabbing: {
+    cursor: 'grabbing',
+  } as React.CSSProperties,
+  viewerCanvas: {
+    display: 'block',
+  } as React.CSSProperties,
+  viewerHint: {
     margin: 0,
     fontSize: '14px',
     color: '#666',
     fontStyle: 'italic',
+    textAlign: 'center',
   },
+  colorResult: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '14px',
+    padding: '12px 14px',
+    borderRadius: '10px',
+    border: '1px solid #e0e0e0',
+    backgroundColor: '#f9f9f9',
+    width: '100%',
+    boxSizing: 'border-box',
+  } as React.CSSProperties,
+  colorResultSwatch: {
+    width: '56px',
+    height: '56px',
+    borderRadius: '8px',
+    border: '2px solid #e0e0e0',
+    flexShrink: 0,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  } as React.CSSProperties,
+  colorResultText: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+  } as React.CSSProperties,
+  colorResultHex: {
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#1a1a1a',
+    fontFamily: 'monospace',
+    letterSpacing: '0.05em',
+  } as React.CSSProperties,
+  colorResultName: {
+    fontSize: '18px',
+    fontWeight: 500,
+    color: '#444',
+  } as React.CSSProperties,
 } as const
