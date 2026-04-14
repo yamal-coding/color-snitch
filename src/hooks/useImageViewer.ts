@@ -5,7 +5,7 @@ import { useZoomPan, type ZoomPanHandlers } from './useZoomPan'
 
 export interface ImageViewerState extends ZoomPanHandlers {
   image: HTMLImageElement | null
-  canvasRef: React.RefObject<HTMLCanvasElement>
+  canvasRef: React.RefObject<HTMLCanvasElement | null>
   handleImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void
   sampleVisibleArea: () => string | null
 }

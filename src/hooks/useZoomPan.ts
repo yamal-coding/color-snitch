@@ -9,7 +9,7 @@ export interface ZoomPanHandlers {
   zoom: number
   pan: Pan
   isDragging: boolean
-  viewerRef: React.RefObject<HTMLDivElement>
+  viewerRef: React.RefObject<HTMLDivElement | null>
   reset: (naturalWidth: number, naturalHeight: number) => void
   handleWheel: (event: React.WheelEvent) => void
   handlePointerDown: (event: React.PointerEvent) => void
